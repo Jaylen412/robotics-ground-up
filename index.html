@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robotics from the Ground Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..600&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a single-column field manual in black and white. A numbered track runs from module 1 to 5, then forks into two paths. Green is the only accent. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --ink:#000000; --muted:#6E6E6E; --line:rgba(0,0,0,.12); --line-strong:rgba(0,0,0,.28);
+  --accent:#0F8A5F; --accent-ink:#FFFFFF; --alt:#6B4FD8; --good:#0F8A5F; --soft:rgba(0,0,0,.05);
+  --btn:#000000; --btn-ink:#FFFFFF;
+  --sans:"Geist","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --surface:#000000; --ink:#F2F2F2; --muted:#8C8C8C; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.3);
+    --accent:#3DDC97; --accent-ink:#000000; --alt:#A996FF; --good:#3DDC97; --soft:rgba(255,255,255,.06);
+    --btn:#F2F2F2; --btn-ink:#000000;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#000000; --ink:#F2F2F2; --muted:#8C8C8C; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.3);
+  --accent:#3DDC97; --accent-ink:#000000; --alt:#A996FF; --good:#3DDC97; --soft:rgba(255,255,255,.06);
+  --btn:#F2F2F2; --btn-ink:#000000;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+a{color:var(--ink)}
+:focus-visible{outline:1px solid var(--accent);outline-offset:3px}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{max-width:760px;margin:0 auto;padding:16px 20px 0;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-weight:600;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.prog{font-family:var(--mono);font-size:.7rem;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.08em}
+nav.chips{max-width:760px;margin:10px auto 0;padding:0 20px;display:flex;gap:24px;overflow-x:auto;scrollbar-width:none}
+nav.chips::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;font-weight:500;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;padding:10px 0 12px;color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;margin-bottom:-1px;white-space:nowrap}
+nav.chips a:hover{color:var(--ink)}
+nav.chips a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+nav.chips a.done::after{content:" ✓";color:var(--accent)}
+main{max-width:760px;margin:0 auto;padding:36px 20px 96px}
+.view{display:none}
+.view.on{display:block}
+h1,h2,h3{font-family:var(--sans);font-weight:500;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,7vw,3.6rem);letter-spacing:-.045em}
+h2{font-size:clamp(2.1rem,7vw,3.4rem);letter-spacing:-.045em}
+h3{font-size:1.35rem;letter-spacing:-.025em;line-height:1.15;margin-top:44px;padding-top:18px;border-top:1px solid var(--ink)}
+h4{font-family:var(--sans);font-size:1.05rem;font-weight:500;letter-spacing:-.01em;margin:8px 0 6px}
+p{margin:10px 0;max-width:65ch}
+ul,ol{max-width:65ch;padding-left:20px;margin:10px 0}
+li{margin:4px 0}
+b,strong{font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px}
+.lede{font-family:var(--serif);font-size:1.2rem;line-height:1.5;color:var(--ink);opacity:.85;margin-top:16px}
+code,pre{font-family:var(--mono);font-size:.82rem}
+code{background:var(--soft);padding:1px 5px}
+pre{background:var(--soft);padding:14px;overflow-x:auto;margin:14px 0;line-height:1.55;border:1px solid var(--line)}
+pre code{background:none;padding:0}
+.tablewrap{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:9px 12px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:.66rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+/* track */
+.track{list-style:none;padding:0;margin:32px 0 0;max-width:none;border-top:1px solid var(--ink)}
+.track li{margin:0}
+.stop{display:grid;grid-template-columns:40px 1fr;gap:16px;text-decoration:none;color:inherit;padding:18px 0;border-bottom:1px solid var(--line)}
+.num{font-family:var(--mono);font-size:.72rem;color:var(--muted);padding-top:6px;letter-spacing:.06em}
+.num::before{content:"0"}
+.stop.done .num{color:var(--accent)}
+.stop.done .num::after{content:" ✓"}
+.stop b{font-size:1.35rem;font-weight:500;letter-spacing:-.025em;display:block;line-height:1.2}
+.stop span.d{color:var(--muted);font-size:.9rem;display:block;margin-top:4px}
+.stop:hover b{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.forklabel{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 12px}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line-strong)}
+.pathcard{display:block;text-decoration:none;color:inherit;padding:22px;background:var(--surface)}
+.pathcard + .pathcard{border-left:1px solid var(--line-strong)}
+.pathcard b{font-family:var(--serif);font-size:2.2rem;font-weight:400;letter-spacing:-.02em;line-height:1;display:block;margin-bottom:10px}
+.pathcard span{font-size:.9rem;color:var(--muted)}
+.pathcard:hover{background:var(--ink);color:var(--bg)}
+.pathcard:hover span{color:inherit;opacity:.7}
+.pathcard.done b::after{content:" ✓";color:var(--accent);font-family:var(--sans);font-size:1.2rem}
+@media (max-width:460px){.fork{grid-template-columns:1fr}.pathcard + .pathcard{border-left:0;border-top:1px solid var(--line-strong)}}
+/* widgets */
+.lab{border:1px solid var(--line-strong);background:var(--surface);padding:20px;margin:20px 0}
+.lab .tag{display:inline-block;font-family:var(--mono);font-size:.65rem;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;border:1px solid var(--accent);padding:3px 8px}
+.lab.code{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lab.code .tag{color:inherit;border-color:currentColor;opacity:.7}
+.lab.code .note{color:inherit;opacity:.75}
+.lab.code pre{background:transparent;border-color:color-mix(in srgb,var(--bg) 25%,transparent);margin-bottom:0}
+.lab.code code{background:color-mix(in srgb,var(--bg) 14%,transparent)}
+.lab.code pre code{background:none}
+.lab canvas{display:block;width:100%;height:240px;margin:12px 0;background:var(--bg);border:1px solid var(--line)}
+.ctl{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+@media (min-width:560px){.ctl{grid-template-columns:1fr 1fr}}
+.ctl label{display:block;font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ctl label output{color:var(--ink);float:right;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;font-size:.78rem}
+input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0 0}
+input[type=number]{width:100%;padding:8px 2px;border:0;border-bottom:1px solid var(--line-strong);border-radius:0;background:transparent;color:var(--ink);font-family:var(--mono);font-size:.9rem;margin-top:2px}
+input[type=number]:focus{outline:none;border-bottom-color:var(--accent)}
+.check{display:flex;gap:10px;align-items:center;font-size:.9rem;margin-top:12px}
+.check input{accent-color:var(--accent);width:18px;height:18px}
+.read{display:flex;flex-wrap:wrap;gap:8px 20px;font-family:var(--mono);font-size:.8rem;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.read b{font-weight:400;color:var(--muted);text-transform:uppercase;font-size:.66rem;letter-spacing:.08em;margin-right:4px}
+.note{font-size:.88rem;color:var(--muted);margin-top:8px}
+.warn{color:var(--ink);font-weight:600}
+.warn::before{content:"! ";font-family:var(--mono)}
+.ok{color:var(--accent);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.68rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.flow button{font-family:var(--mono);font-size:.72rem;padding:9px 11px;border:1px solid var(--line-strong);border-radius:0;background:transparent;color:var(--ink);cursor:pointer}
+.flow button.topic{border-style:dashed;color:var(--muted)}
+.flow button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn);border-style:solid}
+.flow span{color:var(--muted)}
+.detail{border-top:1px solid var(--line);padding-top:12px;font-size:.9rem;min-height:4.5em}
+.stack{display:flex;height:22px;border:1px solid var(--line-strong);overflow:hidden;margin:14px 0 8px;background:var(--bg)}
+.stack div{height:100%}
+/* quiz */
+.quiz{margin-top:44px;padding-top:18px;border-top:1px solid var(--ink)}
+.quiz h3{font-size:1.35rem}
+.q{margin:20px 0}
+.q p{font-weight:500;margin-bottom:10px}
+.opts{display:grid;gap:0}
+.opts button{text-align:left;font:inherit;font-size:.95rem;padding:12px 14px;border:1px solid var(--line-strong);border-radius:0;background:transparent;color:var(--ink);cursor:pointer;margin-top:-1px}
+.opts button:hover{border-color:var(--ink);position:relative}
+.opts button.right{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);position:relative}
+.opts button.wrong{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px;border-style:dashed}
+.why{font-size:.88rem;color:var(--muted);margin-top:8px;min-height:1.2em}
+.status{font-family:var(--mono);font-size:.72rem;margin-top:14px;text-transform:uppercase;letter-spacing:.08em}
+.next{display:flex;flex-wrap:wrap;gap:10px;margin-top:36px}
+.btn{display:inline-block;font-weight:500;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;padding:12px 20px;border-radius:0;text-decoration:none;background:var(--btn);color:var(--btn-ink);border:1px solid var(--btn)}
+.btn:hover{opacity:.86}
+.btn.alt{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.alt:hover{border-color:var(--ink);opacity:1}
+.todo{list-style:none;padding:0}
+.todo label{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.todo input{accent-color:var(--accent);width:18px;height:18px;margin-top:2px;flex:none}
+footer{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:48px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="#home">Robotics from the Ground Up</a>
+    <span class="prog" id="prog">0 of 7 done</span>
+  </div>
+  <nav class="chips" id="chips" aria-label="Modules">
+    <a href="#home">Map</a>
+    <a href="#fundamentals" data-m="fundamentals">1 Fundamentals</a>
+    <a href="#control" data-m="control">2 Control</a>
+    <a href="#motion" data-m="motion">3 Motion</a>
+    <a href="#ros2" data-m="ros2">4 ROS 2</a>
+    <a href="#jetson" data-m="jetson">5 Jetson</a>
+    <a href="#rolling" data-m="rolling">6A Rolling</a>
+    <a href="#flying" data-m="flying">6B Flying</a>
+  </nav>
+</header>
+
+<main>
+<!-- ================= HOME ================= -->
+<section class="view" id="v-home">
+  <div class="eyebrow">Course map</div>
+  <h1>From a blinking LED to a robot that thinks on board</h1>
+  <p class="lede">Five core modules, each with something to tune by hand and a short check at the end. Then pick how your machine moves.</p>
+  <ol class="track">
+    <li><a class="stop" href="#fundamentals" data-m="fundamentals"><span class="num">1</span><span><b>Fundamentals</b><span class="d">The sense, think, act loop. Voltage, PWM, motors, sensors, and which computer does what.</span></span></a></li>
+    <li><a class="stop" href="#control" data-m="control"><span class="num">2</span><span><b>Control</b><span class="d">Feedback and PID. Tune a controller until it stops overshooting.</span></span></a></li>
+    <li><a class="stop" href="#motion" data-m="motion"><span class="num">3</span><span><b>Motion and state estimation</b><span class="d">Frames, wheel kinematics, and fusing a noisy sensor with a drifting one.</span></span></a></li>
+    <li><a class="stop" href="#ros2" data-m="ros2"><span class="num">4</span><span><b>ROS 2</b><span class="d">Nodes, topics, and how a robot's software is split across machines.</span></span></a></li>
+    <li><a class="stop" href="#jetson" data-m="jetson"><span class="num">5</span><span><b>Jetson Orin Nano</b><span class="d">Setup, power modes, TensorRT, and fitting perception into 8 GB and a few milliseconds.</span></span></a></li>
+  </ol>
+  <div class="forklabel">Module 6: choose a path, or do both</div>
+  <div class="fork">
+    <a class="pathcard" href="#rolling" data-m="rolling"><b>Rolling</b><span>A ground rover: odometry, mapping, and navigation with Nav2.</span></a>
+    <a class="pathcard" href="#flying" data-m="flying"><b>Flying</b><span>A quadcopter: flight controller, companion computer, and a power budget.</span></a>
+  </div>
+  <h3>Code along in VS Code</h3>
+  <p>Every module ends with a code lab. The repo holds a starter file with functions to fill in, tests that tell you when you are right, and a reference solution.</p>
+  <pre><code>git clone &lt;your fork&gt; &amp;&amp; cd robotics-ground-up
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+code .          # then open the Testing panel
+pytest          # or run everything from the terminal</code></pre>
+  <footer>Progress is saved in this browser only. Software versions in module 5 were checked in November 2026.</footer>
+</section>
+
+<!-- ================= 1 FUNDAMENTALS ================= -->
+<section class="view" id="v-fundamentals">
+  <div class="eyebrow">Module 1</div>
+  <h2>Fundamentals</h2>
+  <p class="lede">Every robot, from a line follower to a self-flying drone, runs the same loop. This module names its parts.</p>
+
+  <h3>The loop: sense, think, act</h3>
+  <p>A robot measures the world with <b>sensors</b>, decides what to do in <b>software</b>, and changes the world with <b>actuators</b>. Then it measures again. How fast that loop runs sets what the robot can do. Balancing a drone needs the loop to close hundreds of times a second. Choosing which room to drive to can take a full second.</p>
+  <p>That gap in speed is why real robots use two kinds of computer, which you will meet at the end of this module.</p>
+
+  <h3>Just enough electricity</h3>
+  <ul>
+    <li><b>Voltage (V)</b> is electrical pressure. <b>Current (A)</b> is flow. <b>Power (W)</b> is volts times amps.</li>
+    <li>Logic runs at 3.3 V or 5 V and sips milliamps. Motors run at battery voltage and gulp amps. Never power a motor from a logic pin.</li>
+    <li>Everything shares a common ground, or signals mean nothing.</li>
+    <li>Battery capacity is in amp-hours. A 5 Ah pack can supply 5 A for about an hour, or 20 A for about 15 minutes.</li>
+  </ul>
+
+  <h3>PWM: faking an analog signal</h3>
+  <p>A digital pin is either on or off. Switch it thousands of times a second and vary the fraction of time it spends on, the <b>duty cycle</b>, and a motor feels the average. This is pulse-width modulation, and it drives nearly every motor and servo you will use.</p>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Duty cycle on a 12 V supply</h4>
+    <canvas id="pwmC" style="height:130px" aria-label="PWM waveform"></canvas>
+    <div class="ctl"><label for="pwmD">Duty cycle <output id="pwmO"></output><input type="range" id="pwmD" min="0" max="100" value="35"></label></div>
+    <div class="read" id="pwmR"></div>
+  </div>
+
+  <h3>Actuators</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Type</th><th>How you command it</th><th>Where it shows up</th></tr>
+    <tr><td>Brushed DC motor</td><td>PWM through a motor driver (H-bridge) for speed and direction</td><td>Rover wheels</td></tr>
+    <tr><td>Hobby servo</td><td>Pulse width of 1 to 2 ms sets the angle</td><td>Steering, camera gimbals, arms</td></tr>
+    <tr><td>Brushless motor</td><td>An electronic speed controller (ESC) takes a throttle signal</td><td>Drone propellers, fast rovers</td></tr>
+    <tr><td>Stepper</td><td>Step and direction pulses</td><td>Precise, slow positioning</td></tr>
+  </table></div>
+
+  <h3>Sensors</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Sensor</th><th>Measures</th><th>Weakness</th></tr>
+    <tr><td>Wheel encoder</td><td>Wheel rotation in ticks</td><td>Blind to wheel slip</td></tr>
+    <tr><td>IMU (gyro + accelerometer)</td><td>Rotation rate and acceleration</td><td>Gyro drifts, accelerometer is noisy</td></tr>
+    <tr><td>Lidar</td><td>Distance in a sweep around the robot</td><td>Glass, mirrors, cost</td></tr>
+    <tr><td>Camera</td><td>Rich images, needs heavy compute</td><td>Lighting, motion blur</td></tr>
+    <tr><td>GPS</td><td>Position outdoors to a few meters</td><td>Useless indoors</td></tr>
+  </table></div>
+  <p>No sensor is trustworthy alone. Module 3 shows how to combine two flawed ones into a good estimate.</p>
+
+  <h3>Two kinds of computer</h3>
+  <p>A <b>microcontroller</b> (Arduino, STM32, ESP32, or the chip inside a drone's flight controller) runs one program with no operating system in the way. It can read an encoder and update a motor at an exact rate. It cannot run a neural network on camera frames.</p>
+  <p>A <b>single-board computer</b> such as your Jetson Orin Nano runs Linux, has a GPU, and handles vision and planning. Linux does not promise when your code will run to the millisecond, so it is a poor choice for the innermost motor loop.</p>
+  <p>The standard design uses both: the microcontroller keeps the machine stable, the Jetson tells it where to go.</p>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>PWM, servos and battery runtime</h4>
+    <p class="note">Three small functions that turn the ideas above into numbers you will reuse on real hardware.</p>
+    <pre><code>code lessons/01_fundamentals/pwm.py
+pytest tests/test_01_fundamentals.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="fundamentals"></div>
+  <div class="next"><a class="btn" href="#control">Next: Control</a></div>
+</section>
+
+<!-- ================= 2 CONTROL ================= -->
+<section class="view" id="v-control">
+  <div class="eyebrow">Module 2</div>
+  <h2>Control</h2>
+  <p class="lede">Telling a motor "go to 90 degrees" is easy. Getting it there fast, without overshooting, under a load you did not plan for, is control.</p>
+
+  <h3>Open loop and closed loop</h3>
+  <p><b>Open loop</b> means you send a command and hope. Set 50% PWM and the wheel turns at some speed that changes with battery charge, slope and carpet. <b>Closed loop</b> means you measure the result, compare it with the target, and correct. The difference between target and measurement is the <b>error</b>.</p>
+
+  <h3>PID in three sentences</h3>
+  <ul>
+    <li><b>P, proportional:</b> push harder the further you are from the target. Too little is sluggish, too much oscillates.</li>
+    <li><b>I, integral:</b> add up error over time, so a small leftover error eventually gets corrected. Removes the offset a constant load causes.</li>
+    <li><b>D, derivative:</b> resist fast change. Acts like a brake as you approach the target and damps overshoot.</li>
+  </ul>
+  <pre><code>error      = target - measured
+integral  += error * dt
+derivative = (error - last_error) / dt
+output     = Kp*error + Ki*integral + Kd*derivative</code></pre>
+
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Tune a position controller</h4>
+    <p class="note">The target jumps from 0 to 1 at time zero. Aim for a fast rise, under 5% overshoot, and zero final error.</p>
+    <canvas id="pidC" aria-label="PID step response plot"></canvas>
+    <div class="legend"><span><i style="background:var(--muted)"></i>target</span><span><i style="background:var(--accent)"></i>response</span></div>
+    <div class="ctl">
+      <label for="kp">Kp <output id="kpO"></output><input type="range" id="kp" min="0" max="60" step="0.5" value="12"></label>
+      <label for="ki">Ki <output id="kiO"></output><input type="range" id="ki" min="0" max="40" step="0.5" value="0"></label>
+      <label for="kd">Kd <output id="kdO"></output><input type="range" id="kd" min="0" max="12" step="0.1" value="1"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="load"> Add a constant load (like gravity on an arm)</label>
+    <div class="read" id="pidR"></div>
+    <p class="note">Experiments: set Kd to 0 and raise Kp until it rings. Turn on the load with Ki at 0 and watch it stop short. Then add Ki.</p>
+  </div>
+
+  <h3>A tuning order that works</h3>
+  <ol>
+    <li>Set Ki and Kd to zero. Raise Kp until the response is quick and just starts to oscillate.</li>
+    <li>Add Kd until the oscillation dies.</li>
+    <li>Add a little Ki only if a steady error remains.</li>
+  </ol>
+  <p>On real hardware, also limit the integral so it cannot wind up while the motor is saturated, and filter the derivative because sensor noise makes it jumpy.</p>
+
+  <h3>Loops inside loops</h3>
+  <p>Robots stack controllers. On a drone, a position loop asks for a tilt angle, an angle loop asks for a rotation rate, and a rate loop commands the motors. Each inner loop runs faster than the one outside it. On a rover, a velocity loop per wheel sits under the navigation software. You will see both in module 6.</p>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Write the PID controller</h4>
+    <p class="note">Implement <code>PID.update</code> with anti-windup. The tests drive it against the same motor model as the tuner above.</p>
+    <pre><code>code lessons/02_control/pid.py
+pytest tests/test_02_control.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="control"></div>
+  <div class="next"><a class="btn" href="#motion">Next: Motion</a></div>
+</section>
+
+<!-- ================= 3 MOTION ================= -->
+<section class="view" id="v-motion">
+  <div class="eyebrow">Module 3</div>
+  <h2>Motion and state estimation</h2>
+  <p class="lede">A robot has to know where it is and how its motor commands turn into movement. Both come down to geometry and a healthy distrust of sensors.</p>
+
+  <h3>Frames</h3>
+  <p>Every measurement is taken from somewhere. A lidar reports distances from the lidar, a camera from its lens. To use them together you express everything in shared <b>coordinate frames</b>. The common ones:</p>
+  <ul>
+    <li><code>base_link</code>: fixed to the robot body. Forward is x, left is y, up is z.</li>
+    <li><code>odom</code>: where the robot thinks it started. Smooth, but drifts over time.</li>
+    <li><code>map</code>: a fixed world frame. Accurate over the long run, may jump when corrected.</li>
+  </ul>
+  <p>A <b>transform</b> is the rotation and translation between two frames. Getting a sensor's transform wrong by a few centimeters is one of the most common reasons a robot misbehaves.</p>
+
+  <h3>Kinematics of a two-wheeled robot</h3>
+  <p>A differential drive robot steers by spinning its wheels at different speeds. With wheel speeds v<sub>L</sub> and v<sub>R</sub> and a distance L between the wheels:</p>
+  <pre><code>forward speed  v = (vR + vL) / 2
+turn rate      w = (vR - vL) / L</code></pre>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Six seconds of driving</h4>
+    <canvas id="ddC" aria-label="Differential drive path"></canvas>
+    <div class="ctl">
+      <label for="vl">Left wheel <output id="vlO"></output><input type="range" id="vl" min="-1" max="1" step="0.05" value="0.6"></label>
+      <label for="vr">Right wheel <output id="vrO"></output><input type="range" id="vr" min="-1" max="1" step="0.05" value="0.9"></label>
+    </div>
+    <div class="read" id="ddR"></div>
+    <p class="note">Grid squares are 1 m. Wheel spacing is 0.30 m. Try equal speeds, then equal and opposite.</p>
+  </div>
+  <p>Run this in reverse and you have <b>odometry</b>: read how far each wheel turned, and work out how the robot moved. Small errors add up with every step, so odometry alone always drifts.</p>
+
+  <h3>Fusing two bad sensors into one good one</h3>
+  <p>To measure tilt, an accelerometer senses the direction of gravity. It is right on average but shakes with every vibration. A gyro measures rotation rate, and adding it up gives a smooth angle that slowly drifts away. A <b>complementary filter</b> trusts the gyro in the short term and the accelerometer in the long term:</p>
+  <pre><code>angle = a * (angle + gyro_rate * dt) + (1 - a) * accel_angle</code></pre>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Blend gyro and accelerometer</h4>
+    <canvas id="cfC" aria-label="Complementary filter plot"></canvas>
+    <div class="legend"><span><i style="background:var(--ink)"></i>true angle</span><span><i style="background:var(--muted);opacity:.5"></i>accelerometer</span><span><i style="background:var(--alt)"></i>gyro only</span><span><i style="background:var(--accent)"></i>fused</span></div>
+    <div class="ctl"><label for="alpha">Gyro trust, a <output id="alphaO"></output><input type="range" id="alpha" min="0.5" max="1" step="0.005" value="0.96"></label></div>
+    <div class="read" id="cfR"></div>
+    <p class="note">At 1.00 the fused line is the drifting gyro. Near 0.50 it copies the accelerometer's noise. The best error sits in between.</p>
+  </div>
+  <p>The <b>Kalman filter</b> is the grown-up version of this idea. It tracks how uncertain each source is and weights them accordingly, moment by moment. Drone flight controllers and rover localization both run an extended Kalman filter (EKF). You will configure one, not write one.</p>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Kinematics and a complementary filter</h4>
+    <p class="note">Turn wheel speeds into a pose, then write the one-line filter and watch it beat a drifting gyro.</p>
+    <pre><code>code lessons/03_motion/diff_drive.py
+code lessons/03_motion/comp_filter.py
+pytest tests/test_03_motion.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="motion"></div>
+  <div class="next"><a class="btn" href="#ros2">Next: ROS 2</a></div>
+</section>
+
+<!-- ================= 4 ROS 2 ================= -->
+<section class="view" id="v-ros2">
+  <div class="eyebrow">Module 4</div>
+  <h2>ROS 2</h2>
+  <p class="lede">ROS 2 is the plumbing most robots share. It lets small programs written by different people pass data to each other without knowing who is on the other end.</p>
+
+  <h3>The four ideas</h3>
+  <ul>
+    <li><b>Node:</b> one program doing one job, such as a camera driver or a path planner.</li>
+    <li><b>Topic:</b> a named stream of messages. Nodes publish to it or subscribe to it. Many to many.</li>
+    <li><b>Service:</b> a quick request and reply, like "reset odometry".</li>
+    <li><b>Action:</b> a long task with progress and cancel, like "drive to the kitchen".</li>
+  </ul>
+
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>A perception pipeline, tap each part</h4>
+    <div class="flow" id="rosFlow"></div>
+    <div class="detail" id="rosDetail"></div>
+  </div>
+
+  <h3>Commands you will use every day</h3>
+  <pre><code>ros2 node list                 # what is running
+ros2 topic list                # what streams exist
+ros2 topic echo /cmd_vel       # watch messages go by
+ros2 topic hz /image_raw       # is the camera hitting its rate?
+ros2 run tf2_tools view_frames # draw the frame tree
+ros2 bag record -a             # record everything for replay</code></pre>
+  <p>Recording a bag on the robot and replaying it at your desk is the fastest way to debug perception. You get the same sensor data every run.</p>
+
+  <h3>A minimal node</h3>
+  <pre><code>import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+
+class Forward(Node):
+    def __init__(self):
+        super().__init__('forward')
+        self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.create_timer(0.1, self.tick)   # 10 Hz
+
+    def tick(self):
+        msg = Twist()
+        msg.linear.x = 0.2                  # m/s
+        self.pub.publish(msg)
+
+rclpy.init()
+rclpy.spin(Forward())</code></pre>
+
+  <h3>Which version</h3>
+  <p>ROS 2 releases are tied to Ubuntu releases. <b>Humble</b> pairs with Ubuntu 22.04 and <b>Jazzy</b> with Ubuntu 24.04. Which one you install on the Jetson follows from the JetPack version you flash, covered in the next module.</p>
+
+  <h3>Crossing to the microcontroller</h3>
+  <p>The microcontroller usually does not run full ROS 2. Two common bridges: <b>micro-ROS</b>, which makes the microcontroller appear as a real node, or a simple serial protocol with a small bridge node on the Jetson. For drones, the flight controller speaks MAVLink or uXRCE-DDS, covered in the flying path.</p>
+
+  <h3>Simulate first</h3>
+  <p>Gazebo runs a physics simulation that publishes the same topics your real robot will. Code that drives the simulated robot drives the real one with few changes. For anything that flies, simulation is where crashes should happen.</p>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Logic you can test without a robot</h4>
+    <p class="note">Write <code>safe_speed</code>, which slows and stops for obstacles. <code>obstacle_stop_node.py</code> wraps it in a real node for when ROS 2 is installed.</p>
+    <pre><code>code lessons/04_ros2/safety.py
+pytest tests/test_04_ros2.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="ros2"></div>
+  <div class="next"><a class="btn" href="#jetson">Next: Jetson Orin Nano</a></div>
+</section>
+
+<!-- ================= 5 JETSON ================= -->
+<section class="view" id="v-jetson">
+  <div class="eyebrow">Module 5</div>
+  <h2>Jetson Orin Nano</h2>
+  <p class="lede">Edge computing means the robot runs its own AI on board, with no cloud round trip. Your Orin Nano is the part that does it. The work is fitting models into its memory, power and time limits.</p>
+
+  <h3>What you have</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Part</th><th>Orin Nano 8GB</th><th>Why it matters</th></tr>
+    <tr><td>CPU</td><td>6-core Arm Cortex-A78AE</td><td>ROS 2 nodes, planning, pre and post-processing</td></tr>
+    <tr><td>GPU</td><td>1024-core Ampere, 32 tensor cores</td><td>Neural network inference through CUDA and TensorRT</td></tr>
+    <tr><td>Memory</td><td>8 GB, shared by CPU and GPU</td><td>The tightest limit. Model, OS and camera buffers all draw from one pool</td></tr>
+    <tr><td>AI performance</td><td>Up to 67 TOPS in Super Mode</td><td>Unlocked by software, same hardware</td></tr>
+    <tr><td>Power modes</td><td>15 W, 25 W, MAXN SUPER</td><td>Trade speed for battery life and heat</td></tr>
+    <tr><td>Dev kit I/O</td><td>2 MIPI CSI camera ports, USB, M.2 NVMe, 40-pin header</td><td>Cameras, storage, UART and I2C to your microcontroller</td></tr>
+  </table></div>
+  <p>Two limits to know early: the Orin Nano has no hardware video encoder and no separate deep learning accelerator, so video encoding runs on the CPU and all inference runs on the GPU.</p>
+
+  <h3>Set it up for a robot</h3>
+  <ol>
+    <li><b>Pick a JetPack.</b> JetPack is NVIDIA's bundle of Linux, drivers, CUDA and TensorRT. JetPack 6.2 (Ubuntu 22.04, pairs with ROS 2 Humble) is the mature choice with the widest tool support. JetPack 7.2 (Ubuntu 24.04, pairs with Jazzy) added Orin support in mid 2026; some community tools were still catching up, so check that what you need supports it.</li>
+    <li><b>Boot from NVMe,</b> not an SD card. It is faster and survives vibration and power cuts better.</li>
+    <li><b>Go headless.</b> Turning off the desktop frees memory for your models. Work over SSH.</li>
+    <li><b>Add swap</b> on the NVMe as a safety net, and treat it as an alarm when it gets used.</li>
+  </ol>
+  <pre><code>sudo nvpmodel -q            # show current power mode
+sudo nvpmodel -m &lt;id&gt;       # switch mode (ids are listed in /etc/nvpmodel.conf)
+tegrastats                  # live RAM, GPU load, temperature, power
+sudo systemctl set-default multi-user.target   # boot without the desktop</code></pre>
+
+  <h3>From trained model to fast engine</h3>
+  <p>You already train models. Deployment on the Jetson adds one step: compiling the model for this exact GPU with <b>TensorRT</b>.</p>
+  <ol>
+    <li>Train in PyTorch on a workstation or in the cloud.</li>
+    <li>Export to <b>ONNX</b>, a portable model format.</li>
+    <li>Build a TensorRT <b>engine</b> on the Jetson itself. Engines are tied to the device and TensorRT version that built them.</li>
+    <li>Load the engine in your ROS 2 node and run inference.</li>
+  </ol>
+  <pre><code>/usr/src/tensorrt/bin/trtexec \
+  --onnx=detector.onnx \
+  --saveEngine=detector.engine \
+  --fp16</code></pre>
+  <p><b>Precision</b> is the main speed dial. FP32 is the default. <b>FP16</b> halves the memory and usually runs much faster with almost no accuracy loss, so start there. <b>INT8</b> is faster again but needs a calibration set of real images and careful accuracy checks. <code>trtexec</code> prints the measured latency, which is the number to put in the planner below.</p>
+
+  <h3>Budget one: memory</h3>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Fit your stack into 8 GB</h4>
+    <div class="stack" id="memBar" role="img" aria-label="Memory use"></div>
+    <div class="legend" id="memLeg"></div>
+    <div class="ctl">
+      <label for="mOs">Linux and desktop <output id="mOsO"></output><input type="range" id="mOs" min="0.5" max="2.5" step="0.1" value="1.6"></label>
+      <label for="mRos">ROS 2 nodes <output id="mRosO"></output><input type="range" id="mRos" min="0.2" max="2" step="0.1" value="0.8"></label>
+      <label for="mMod">Models and runtime <output id="mModO"></output><input type="range" id="mMod" min="0.2" max="6" step="0.1" value="2.0"></label>
+      <label for="mBuf">Camera and image buffers <output id="mBufO"></output><input type="range" id="mBuf" min="0.1" max="2" step="0.1" value="0.6"></label>
+    </div>
+    <div class="read" id="memR"></div>
+    <p class="note">Slider values are planning estimates. Replace them with what <code>tegrastats</code> reports on your board. Going headless is the cheapest way to shrink the first bar.</p>
+  </div>
+
+  <h3>Budget two: time</h3>
+  <p>A detection is only useful if it arrives while it is still true. Total delay is capture plus pre-processing plus inference plus post-processing. While that time passes, the robot keeps moving on old information.</p>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>How far do you travel blind?</h4>
+    <div class="ctl">
+      <label for="tCap">Capture and transfer <output id="tCapO"></output><input type="range" id="tCap" min="2" max="60" value="15"></label>
+      <label for="tPre">Pre-processing <output id="tPreO"></output><input type="range" id="tPre" min="1" max="40" value="6"></label>
+      <label for="tInf">Inference <output id="tInfO"></output><input type="range" id="tInf" min="2" max="300" value="22"></label>
+      <label for="tPost">Post-processing <output id="tPostO"></output><input type="range" id="tPost" min="1" max="40" value="5"></label>
+      <label for="tSpd">Robot speed <output id="tSpdO"></output><input type="range" id="tSpd" min="0.1" max="15" step="0.1" value="1.0"></label>
+    </div>
+    <div class="read" id="latR"></div>
+    <p class="note">Set speed to 1 m/s for a rover and 8 m/s for a drone and compare. Do pre-processing on the GPU where you can; resizing on the CPU often costs more than people expect.</p>
+  </div>
+
+  <h3>Wiring it into a machine</h3>
+  <ul>
+    <li><b>Power:</b> feed it from a dedicated regulator off the main battery, sized for the power mode you run plus USB devices. Motors cause voltage dips that reboot a Jetson sharing their supply.</li>
+    <li><b>Link to the low-level controller:</b> UART on the 40-pin header or USB. Header logic is 3.3 V.</li>
+    <li><b>Cameras:</b> CSI cameras have lower latency and CPU cost. USB cameras are easier to start with.</li>
+    <li><b>Heat and vibration:</b> keep airflow over the heatsink, mount on dampers, and secure every connector.</li>
+    <li><b>Watch it run:</b> log <code>tegrastats</code> during a test. Thermal throttling looks exactly like a model that got slower for no reason.</li>
+  </ul>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Budgets and a tegrastats parser</h4>
+    <p class="note">Code the latency and memory math from this module, then parse live <code>tegrastats</code> output. <code>export_onnx.py</code> and <code>build_engine.sh</code> are ready to run on the Jetson.</p>
+    <pre><code>code lessons/05_jetson/budget.py
+pytest tests/test_05_jetson.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="jetson"></div>
+  <div class="next"><a class="btn" href="#rolling">Path: Rolling</a><a class="btn alt" href="#flying">Path: Flying</a></div>
+</section>
+
+<!-- ================= 6A ROLLING ================= -->
+<section class="view" id="v-rolling">
+  <div class="eyebrow">Module 6A, path</div>
+  <h2>Rolling</h2>
+  <p class="lede">A ground rover forgives mistakes. It stops when the software crashes, which makes it the best first robot for a Jetson.</p>
+
+  <h3>The architecture</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Layer</th><th>Hardware</th><th>Job</th><th>Rate</th></tr>
+    <tr><td>Low level</td><td>Microcontroller and motor driver</td><td>Read encoders, PID on each wheel</td><td>100 Hz and up</td></tr>
+    <tr><td>Estimation</td><td>Jetson CPU</td><td>Fuse wheel odometry and IMU (robot_localization EKF)</td><td>30 to 50 Hz</td></tr>
+    <tr><td>Mapping</td><td>Jetson CPU</td><td>Build a map and find the robot in it (slam_toolbox)</td><td>A few Hz</td></tr>
+    <tr><td>Navigation</td><td>Jetson CPU</td><td>Plan paths and avoid obstacles (Nav2), outputs <code>/cmd_vel</code></td><td>10 to 20 Hz</td></tr>
+    <tr><td>Perception</td><td>Jetson GPU</td><td>Detect objects or people with a TensorRT model</td><td>Camera rate</td></tr>
+  </table></div>
+
+  <h3>Wheel odometry</h3>
+  <p>Encoders count ticks. Distance per tick depends on the wheel size and the gear ratio. Every later stage inherits the error if this number is off.</p>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Encoder resolution</h4>
+    <div class="ctl">
+      <label for="eT">Encoder ticks per motor turn<input type="number" id="eT" value="48" min="1"></label>
+      <label for="eG">Gear ratio (motor turns per wheel turn)<input type="number" id="eG" value="34" min="0.1" step="0.1"></label>
+      <label for="eD">Wheel diameter, mm<input type="number" id="eD" value="65" min="1"></label>
+      <label for="eE">Diameter error, %<input type="number" id="eE" value="2" min="0" step="0.5"></label>
+    </div>
+    <div class="read" id="encR"></div>
+  </div>
+  <p>Calibrate by driving a measured straight line and a measured number of full turns, then correct the wheel diameter and wheel spacing until odometry agrees.</p>
+
+  <h3>Mapping and navigation</h3>
+  <p><b>SLAM</b> (simultaneous localization and mapping) builds a map while tracking the robot in it. With a 2D lidar, <code>slam_toolbox</code> does this out of the box. It publishes the <code>map</code> to <code>odom</code> transform, correcting the drift you saw in module 3.</p>
+  <p><b>Nav2</b> takes a goal pose, plans a route across the map, and follows it while steering around obstacles that were not on the map. Its output is a stream of velocity commands that your microcontroller turns into wheel speeds.</p>
+
+  <h3>Where the GPU earns its place</h3>
+  <p>Lidar navigation runs fine on the CPU. Add the GPU when the robot needs to understand what it sees: following a person, finding an object, reading a sign, or estimating depth from cameras in place of a lidar. Run that model as its own node and publish results as a topic, so navigation keeps working when perception is slow or restarting.</p>
+
+  <h3>Build order</h3>
+  <ul class="todo" data-todo="rolling">
+    <li>Drive the motors from the microcontroller with PWM, wheels off the ground</li>
+    <li>Read encoders and close a velocity PID loop on each wheel</li>
+    <li>Bridge the microcontroller to the Jetson and drive with a keyboard over <code>/cmd_vel</code></li>
+    <li>Publish odometry and calibrate it on a measured course</li>
+    <li>Add the IMU and fuse it with an EKF</li>
+    <li>Add the lidar, set its transform, and build a map of one room</li>
+    <li>Send the robot to a goal with Nav2</li>
+    <li>Add a camera and a TensorRT detector as a separate node</li>
+    <li>Make one behavior depend on perception, such as stopping for a person</li>
+  </ul>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Encoder odometry</h4>
+    <p class="note">Convert ticks to meters and update the robot's pose from wheel travel.</p>
+    <pre><code>code lessons/06a_rolling/odometry.py
+pytest tests/test_06a_rolling.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="rolling"></div>
+  <div class="next"><a class="btn" href="#flying">Other path: Flying</a><a class="btn alt" href="#home">Back to the map</a></div>
+</section>
+
+<!-- ================= 6B FLYING ================= -->
+<section class="view" id="v-flying">
+  <div class="eyebrow">Module 6B, path</div>
+  <h2>Flying</h2>
+  <p class="lede">A quadcopter is unstable by nature and falls when its software stops. The design rule that follows: the Jetson never flies the aircraft. It advises the thing that does.</p>
+
+  <h3>How a quadcopter moves</h3>
+  <p>Four propellers, two spinning each way. Speed all four up to climb. Speed up one side to tilt, and the tilted thrust pushes the drone sideways. Speed up the pair that spin the same direction to rotate in place. There are no other controls, so every motion is a change in four motor speeds, updated hundreds of times a second.</p>
+
+  <h3>Flight controller and companion computer</h3>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Flight controller</th><th>Jetson (companion)</th></tr>
+    <tr><td>Hardware</td><td>Microcontroller board with IMU and barometer (Pixhawk class)</td><td>Orin Nano on a regulated supply</td></tr>
+    <tr><td>Software</td><td>PX4 or ArduPilot</td><td>Linux, ROS 2, your models</td></tr>
+    <tr><td>Job</td><td>Attitude and rate loops, state estimation, failsafes</td><td>Vision, mapping, deciding where to go</td></tr>
+    <tr><td>If it crashes</td><td>The drone falls</td><td>The flight controller holds position or lands</td></tr>
+  </table></div>
+  <p>The two talk over a serial link. With PX4 and ROS 2, the bridge is <b>uXRCE-DDS</b>, which exposes flight controller data as ROS 2 topics. With ArduPilot, or for a simpler setup, use <b>MAVLink</b> through MAVROS. The Jetson sends position or velocity setpoints in <b>offboard</b> mode (ArduPilot calls it guided). The pilot can always take over from the radio.</p>
+
+  <h3>Knowing where it is</h3>
+  <p>The flight controller runs an EKF over its IMU, barometer, compass and GPS. Indoors or under trees GPS fails, and the Jetson can fill the gap: <b>visual-inertial odometry</b> from a camera and IMU, fed back to the flight controller as an external position source. This is one of the most valuable jobs an on-board GPU does.</p>
+
+  <h3>The weight and power budget</h3>
+  <p>Everything you add costs flight time twice: its weight needs more thrust, and its electronics draw power. Aim for total maximum thrust of at least twice the takeoff weight so the drone has margin to maneuver.</p>
+  <div class="lab">
+    <span class="tag">Try it</span>
+    <h4>Hover time with a Jetson on board</h4>
+    <div class="ctl">
+      <label for="fM">Takeoff weight <output id="fMO"></output><input type="range" id="fM" min="400" max="4000" step="50" value="1500"></label>
+      <label for="fT">Max thrust per motor <output id="fTO"></output><input type="range" id="fT" min="200" max="3000" step="50" value="900"></label>
+      <label for="fC">Battery cells (S) <output id="fCO"></output><input type="range" id="fC" min="3" max="6" step="1" value="4"></label>
+      <label for="fB">Battery capacity <output id="fBO"></output><input type="range" id="fB" min="1000" max="10000" step="100" value="5000"></label>
+      <label for="fE">Hover efficiency <output id="fEO"></output><input type="range" id="fE" min="3" max="12" step="0.5" value="7"></label>
+      <label for="fJ">Jetson and sensors <output id="fJO"></output><input type="range" id="fJ" min="5" max="40" step="1" value="18"></label>
+    </div>
+    <div class="read" id="flyR"></div>
+    <p class="note">Assumes 3.7 V per cell and 80% of the battery used. Hover efficiency is grams lifted per watt; find it on your motor and propeller's thrust table. Real flights land shorter than this estimate.</p>
+  </div>
+
+  <h3>Safety is part of the engineering</h3>
+  <ul>
+    <li>Fly new code in simulation first. PX4 and ArduPilot both run software-in-the-loop against Gazebo, publishing the same topics as the real aircraft.</li>
+    <li>Bench test with propellers off. Always.</li>
+    <li>Keep a radio transmitter in hand with a mode switch that takes control back and a kill switch.</li>
+    <li>Set failsafes for lost link and low battery before the first flight, and test them.</li>
+    <li>First real offboard flights: outdoors in an open area or inside a net, low and slow.</li>
+    <li>Check the registration and airspace rules where you fly.</li>
+  </ul>
+
+  <h3>Build order</h3>
+  <ul class="todo" data-todo="flying">
+    <li>Fly the simulated drone by hand, then with a ROS 2 offboard script</li>
+    <li>Build the airframe and fly it manually with no Jetson on board</li>
+    <li>Tune it until position hold is solid</li>
+    <li>Mount the Jetson on a regulated supply and recheck weight and thrust margin</li>
+    <li>Connect the serial link and read flight controller topics on the Jetson</li>
+    <li>Run the same offboard script on the real drone: take off, hover, land</li>
+    <li>Add a camera and run a TensorRT model in flight, logging only</li>
+    <li>Close the loop: let perception set a goal, such as following a target</li>
+  </ul>
+
+  <div class="lab code">
+    <span class="tag">Code lab, in the repo</span>
+    <h4>Power budget and an offboard command</h4>
+    <p class="note">Compute thrust margin and hover time, then write the capped velocity setpoint a companion computer sends.</p>
+    <pre><code>code lessons/06b_flying/flight.py
+pytest tests/test_06b_flying.py</code></pre>
+  </div>
+
+  <div class="quiz" data-quiz="flying"></div>
+  <div class="next"><a class="btn" href="#rolling">Other path: Rolling</a><a class="btn alt" href="#home">Back to the map</a></div>
+</section>
+</main>
+
+<script>
+(function(){
+"use strict";
+var MODS=["fundamentals","control","motion","ros2","jetson","rolling","flying"];
+var $=function(id){return document.getElementById(id)};
+var store={};
+try{store=JSON.parse(localStorage.getItem("rgu-state")||"{}")||{}}catch(e){store={}}
+store.done=store.done||{};store.todo=store.todo||{};
+function save(){try{localStorage.setItem("rgu-state",JSON.stringify(store))}catch(e){}}
+
+/* ---------- routing ---------- */
+function route(){
+  var h=(location.hash||"").replace("#","");
+  if(MODS.indexOf(h)<0)h="home";
+  document.querySelectorAll(".view").forEach(function(v){v.classList.toggle("on",v.id==="v-"+h)});
+  document.querySelectorAll("#chips a").forEach(function(a){
+    var on=a.getAttribute("href")==="#"+h;
+    if(on){a.setAttribute("aria-current","page");a.scrollIntoView({block:"nearest",inline:"center"})}else a.removeAttribute("aria-current");
+  });
+  window.scrollTo(0,0);
+  drawAll();
+}
+function paintProgress(){
+  var n=0;
+  MODS.forEach(function(m){if(store.done[m])n++});
+  $("prog").textContent=n+" of 7 done";
+  document.querySelectorAll("[data-m]").forEach(function(el){el.classList.toggle("done",!!store.done[el.dataset.m])});
+}
+
+/* ---------- quizzes ---------- */
+var QUIZ={
+fundamentals:[
+ {q:"Why does a robot usually pair a microcontroller with a Linux computer?",o:["Linux computers cannot use sensors","The microcontroller gives exact timing for motor loops; the Linux computer handles heavy perception","Microcontrollers are faster at neural networks"],a:1,w:"Timing guarantees and compute power come from different machines."},
+ {q:"A motor on a 12 V supply gets 25% duty cycle PWM. What average voltage does it see?",o:["3 V","9 V","12 V, but for a quarter of the current"],a:0,w:"Average voltage is supply times duty cycle: 12 × 0.25."},
+ {q:"Which sensor reports wheel rotation and cannot detect slipping?",o:["Lidar","IMU","Wheel encoder"],a:2,w:"An encoder counts shaft rotation whether or not the tire grips."}],
+control:[
+ {q:"With P control only, an arm holding a weight settles just below its target. What fixes it?",o:["Add integral gain","Add derivative gain","Lower the proportional gain"],a:0,w:"The integral term builds up until the steady error is gone."},
+ {q:"Your response overshoots and rings. Which change helps most?",o:["Raise Ki","Raise Kd","Raise the target"],a:1,w:"Derivative action damps fast change near the target."},
+ {q:"In a cascade of loops, which runs fastest?",o:["The outermost, such as position","The innermost, such as motor rate","They must all run at the same rate"],a:1,w:"Inner loops have to settle before the outer loop's next command."}],
+motion:[
+ {q:"A differential drive robot has both wheels at equal and opposite speeds. It will:",o:["Drive straight","Spin in place","Follow a wide arc"],a:1,w:"v is zero and the turn rate is at its largest."},
+ {q:"Why not get tilt angle from the gyro alone?",o:["Gyros are too noisy from vibration","Adding up its rate lets small bias errors grow into drift","Gyros cannot measure rotation"],a:1,w:"Integration accumulates bias, so the angle walks away over time."},
+ {q:"Which frame is smooth but drifts over time?",o:["map","odom","base_link"],a:1,w:"odom comes from dead reckoning. map corrects it."}],
+ros2:[
+ {q:"A camera driver should send images to any node that wants them. Use a:",o:["Topic","Service","Action"],a:0,w:"Topics are continuous many-to-many streams."},
+ {q:"\"Drive to the charging dock\" takes a minute and may be cancelled. Use a:",o:["Topic","Service","Action"],a:2,w:"Actions carry progress feedback and can be cancelled."},
+ {q:"What is the main value of recording a bag?",o:["It makes the robot faster","You can replay identical sensor data to debug at your desk","It compresses the model"],a:1,w:"Repeatable input turns a flaky field problem into a desk problem."}],
+jetson:[
+ {q:"Where should you build a TensorRT engine?",o:["On your workstation, then copy it over","On the Jetson that will run it","Anywhere, engines are portable"],a:1,w:"Engines are tied to the GPU and TensorRT version that built them."},
+ {q:"What is the first optimization to try on a new model?",o:["FP16 precision","INT8 without calibration","A bigger power supply"],a:0,w:"FP16 is nearly free: big speedup, minimal accuracy cost, no calibration set."},
+ {q:"Why does going headless help on the Orin Nano?",o:["It raises the TOPS rating","CPU and GPU share 8 GB, and the desktop uses some of it","It disables thermal throttling"],a:1,w:"Memory is one shared pool, and it is usually the tightest limit."}],
+rolling:[
+ {q:"What does Nav2 output to the low-level controller?",o:["PWM duty cycles","Velocity commands on /cmd_vel","Encoder ticks"],a:1,w:"The microcontroller turns those velocities into wheel speeds."},
+ {q:"SLAM publishes the map to odom transform. What is that correcting?",o:["Camera exposure","Accumulated odometry drift","Motor driver heat"],a:1,w:"Matching lidar scans to the map pulls the estimate back."},
+ {q:"Why run the detector as its own node?",o:["Navigation keeps working if perception is slow or restarts","ROS 2 requires one node per GPU","It uses less memory"],a:0,w:"Isolation keeps a slow model from stalling the robot."}],
+flying:[
+ {q:"The Jetson process crashes mid-flight. With a correct design, what happens?",o:["The drone falls","The flight controller holds position or lands","The motors lock at full throttle"],a:1,w:"Stability lives in the flight controller. The Jetson only advises."},
+ {q:"A 1500 g drone should have total maximum thrust of at least:",o:["1500 g","3000 g","750 g"],a:1,w:"A 2 to 1 thrust-to-weight ratio leaves margin to maneuver."},
+ {q:"What can the Jetson supply when GPS is unavailable?",o:["Motor commutation","Visual-inertial odometry as a position source","Barometer readings"],a:1,w:"Camera plus IMU gives a position estimate the flight controller can fuse."}]
+};
+function buildQuiz(box){
+  var id=box.dataset.quiz,qs=QUIZ[id],got={};
+  var h=document.createElement("h3");h.textContent="Check yourself";h.style.border="0";h.style.margin="0";h.style.padding="0";box.appendChild(h);
+  var status=document.createElement("div");status.className="status";
+  qs.forEach(function(q,i){
+    var d=document.createElement("div");d.className="q";
+    var p=document.createElement("p");p.textContent=(i+1)+". "+q.q;d.appendChild(p);
+    var opts=document.createElement("div");opts.className="opts";
+    var why=document.createElement("div");why.className="why";why.setAttribute("aria-live","polite");
+    q.o.forEach(function(t,j){
+      var b=document.createElement("button");b.type="button";b.textContent=t;
+      b.addEventListener("click",function(){
+        opts.querySelectorAll("button").forEach(function(x){x.classList.remove("right","wrong")});
+        if(j===q.a){b.classList.add("right");why.textContent="Correct. "+q.w;got[i]=true}
+        else{b.classList.add("wrong");why.textContent="Not that one. Try again.";got[i]=false}
+        upd();
+      });
+      opts.appendChild(b);
+    });
+    d.appendChild(opts);d.appendChild(why);box.appendChild(d);
+  });
+  box.appendChild(status);
+  function upd(){
+    var n=0;for(var k in got)if(got[k])n++;
+    if(n===qs.length){store.done[id]=true;save();paintProgress()}
+    status.innerHTML=store.done[id]?'<span class="ok">Module complete.</span>':n+" of "+qs.length+" correct";
+  }
+  upd();
+}
+
+/* ---------- checklists ---------- */
+function buildTodo(ul){
+  var id=ul.dataset.todo;store.todo[id]=store.todo[id]||{};
+  Array.prototype.forEach.call(ul.children,function(li,i){
+    var html=li.innerHTML;li.innerHTML="";
+    var lab=document.createElement("label"),cb=document.createElement("input"),sp=document.createElement("span");
+    cb.type="checkbox";cb.id="todo-"+id+"-"+i;cb.checked=!!store.todo[id][i];sp.innerHTML=html;
+    cb.addEventListener("change",function(){store.todo[id][i]=cb.checked;save()});
+    lab.appendChild(cb);lab.appendChild(sp);li.appendChild(lab);
+  });
+}
+
+/* ---------- canvas helpers ---------- */
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function ctxFor(id){
+  var c=$(id),w=c.clientWidth,h=c.clientHeight;
+  if(!w||!h)return null;
+  var r=window.devicePixelRatio||1;
+  c.width=Math.round(w*r);c.height=Math.round(h*r);
+  var g=c.getContext("2d");g.setTransform(r,0,0,r,0,0);g.clearRect(0,0,w,h);
+  g.font="11px "+css("--mono");g.lineJoin="round";
+  return {g:g,w:w,h:h};
+}
+function val(id){return parseFloat($(id).value)}
+function out(id,t){$(id+"O").textContent=t}
+function line(g,pts,color,width,alpha){
+  g.save();g.globalAlpha=alpha||1;g.strokeStyle=color;g.lineWidth=width||2;g.beginPath();
+  pts.forEach(function(p,i){i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])});g.stroke();g.restore();
+}
+
+/* ---------- PWM ---------- */
+function drawPwm(){
+  var d=val("pwmD");out("pwmD",d+"%");
+  $("pwmR").innerHTML="<span><b>average</b> "+(12*d/100).toFixed(1)+" V</span><span><b>on time per 1 ms cycle</b> "+(d/100).toFixed(2)+" ms</span>";
+  var c=ctxFor("pwmC");if(!c)return;var g=c.g,w=c.w,h=c.h,top=22,bot=h-22,n=5,pw=(w-20)/n,pts=[];
+  for(var i=0;i<n;i++){var x=10+i*pw,xe=x+pw*d/100;
+    if(d>0){pts.push([x,bot],[x,top],[xe,top],[xe,bot])}else pts.push([x,bot]);
+    pts.push([x+pw,bot]);}
+  line(g,pts,css("--accent"),2);
+  var ay=bot-(bot-top)*d/100;g.setLineDash([4,4]);line(g,[[10,ay],[w-10,ay]],css("--muted"),1);g.setLineDash([]);
+  g.fillStyle=css("--muted");g.fillText("12 V",10,top-8);g.fillText("0 V",10,h-6);
+}
+
+/* ---------- PID ---------- */
+function drawPid(){
+  var kp=val("kp"),ki=val("ki"),kd=val("kd"),load=$("load").checked?-4:0;
+  out("kp",kp.toFixed(1));out("ki",ki.toFixed(1));out("kd",kd.toFixed(1));
+  var dt=0.002,T=6,x=0,v=0,I=0,pts=[],mx=0,settle=0,N=Math.round(T/dt);
+  for(var i=0;i<=N;i++){
+    var e=1-x;I+=e*dt;if(I>3)I=3;if(I<-3)I=-3;
+    var u=kp*e+ki*I-kd*v;if(u>30)u=30;if(u<-30)u=-30;
+    var a=u+load-1.5*v;v+=a*dt;x+=v*dt;
+    if(x>mx)mx=x;if(Math.abs(1-x)>0.02)settle=i*dt;
+    if(i%10===0)pts.push([i*dt,x]);
+  }
+  var os=Math.max(0,(mx-1)*100),err=1-x,settled=settle<T-0.05;
+  var good=settled&&os<5&&Math.abs(err)<0.02;
+  $("pidR").innerHTML="<span><b>overshoot</b> "+os.toFixed(1)+"%</span><span><b>settles in</b> "+(settled?settle.toFixed(2)+" s":"not within 6 s")+"</span><span><b>final error</b> "+err.toFixed(3)+"</span>"+(good?'<span class="ok">Well tuned</span>':"");
+  var c=ctxFor("pidC");if(!c)return;var g=c.g,w=c.w,h=c.h,L=30,R=8,Tp=10,B=20;
+  var X=function(t){return L+(w-L-R)*t/T},Y=function(y){y=Math.max(-0.2,Math.min(2,y));return h-B-(h-B-Tp)*(y+0.2)/2.2};
+  g.strokeStyle=css("--line");g.lineWidth=1;g.fillStyle=css("--muted");
+  [0,0.5,1,1.5,2].forEach(function(y){g.beginPath();g.moveTo(L,Y(y));g.lineTo(w-R,Y(y));g.stroke();g.fillText(y.toFixed(1),4,Y(y)+4)});
+  for(var t=0;t<=T;t+=2)g.fillText(t+" s",X(t)-8,h-5);
+  line(g,[[X(0),Y(0)],[X(0),Y(1)],[X(T),Y(1)]],css("--muted"),1.5);
+  line(g,pts.map(function(p){return[X(p[0]),Y(p[1])]}),css("--accent"),2.5);
+}
+
+/* ---------- diff drive ---------- */
+function drawDd(){
+  var vl=val("vl"),vr=val("vr"),Lw=0.3;out("vl",vl.toFixed(2)+" m/s");out("vr",vr.toFixed(2)+" m/s");
+  var v=(vl+vr)/2,om=(vr-vl)/Lw,x=0,y=0,th=0,dt=0.01,pts=[[0,0]];
+  for(var i=0;i<600;i++){x+=v*Math.cos(th)*dt;y+=v*Math.sin(th)*dt;th+=om*dt;if(i%3===0)pts.push([x,y])}
+  var rad=Math.abs(om)<1e-6?"straight line":(Math.abs(v/om)).toFixed(2)+" m";
+  $("ddR").innerHTML="<span><b>v</b> "+v.toFixed(2)+" m/s</span><span><b>turn rate</b> "+(om*180/Math.PI).toFixed(0)+" °/s</span><span><b>turn radius</b> "+rad+"</span>";
+  var c=ctxFor("ddC");if(!c)return;var g=c.g,w=c.w,h=c.h,s=Math.min(w,h)/7,cx=w/2,cy=h/2;
+  var X=function(a){return cx+a*s},Y=function(b){return cy-b*s};
+  g.strokeStyle=css("--line");g.lineWidth=1;
+  for(var k=-12;k<=12;k++){g.beginPath();g.moveTo(X(k),0);g.lineTo(X(k),h);g.stroke();g.beginPath();g.moveTo(0,Y(k));g.lineTo(w,Y(k));g.stroke()}
+  g.fillStyle=css("--muted");g.beginPath();g.arc(X(0),Y(0),4,0,7);g.fill();
+  line(g,pts.map(function(p){return[X(p[0]),Y(p[1])]}),css("--accent"),2.5);
+  g.save();g.translate(X(x),Y(y));g.rotate(-th);g.fillStyle=css("--ink");
+  g.beginPath();g.moveTo(11,0);g.lineTo(-7,7);g.lineTo(-7,-7);g.closePath();g.fill();g.restore();
+}
+
+/* ---------- complementary filter ---------- */
+var CF=(function(){var s=12345,r=function(){s=(s*1103515245+12345)%2147483648;return s/2147483648};
+  var n=500,dt=0.02,tr=[],ac=[],gy=[];
+  for(var i=0;i<n;i++){var t=i*dt;tr.push(20*Math.sin(0.8*t));
+    ac.push(tr[i]+(r()+r()+r()-1.5)*12);gy.push(20*0.8*Math.cos(0.8*t)+1.8+(r()-0.5)*1.5)}
+  return{n:n,dt:dt,tr:tr,ac:ac,gy:gy}})();
+function drawCf(){
+  var a=val("alpha");out("alpha",a.toFixed(3));
+  var n=CF.n,dt=CF.dt,g0=0,f=0,gs=[],fs=[],eA=0,eG=0,eF=0;
+  for(var i=0;i<n;i++){g0+=CF.gy[i]*dt;f=a*(f+CF.gy[i]*dt)+(1-a)*CF.ac[i];gs.push(g0);fs.push(f);
+    eA+=Math.pow(CF.ac[i]-CF.tr[i],2);eG+=Math.pow(g0-CF.tr[i],2);eF+=Math.pow(f-CF.tr[i],2)}
+  var rm=function(e){return Math.sqrt(e/n).toFixed(1)+"°"};
+  $("cfR").innerHTML="<span><b>error, accelerometer</b> "+rm(eA)+"</span><span><b>gyro only</b> "+rm(eG)+"</span><span><b>fused</b> "+rm(eF)+"</span>";
+  var c=ctxFor("cfC");if(!c)return;var g=c.g,w=c.w,h=c.h,L=30;
+  var X=function(i){return L+(w-L-6)*i/(n-1)},Y=function(v){v=Math.max(-45,Math.min(45,v));return h/2-v*(h/2-10)/45};
+  g.strokeStyle=css("--line");g.fillStyle=css("--muted");g.lineWidth=1;
+  [-40,-20,0,20,40].forEach(function(v){g.beginPath();g.moveTo(L,Y(v));g.lineTo(w-6,Y(v));g.stroke();g.fillText(v+"°",2,Y(v)+4)});
+  var P=function(arr){return arr.map(function(v,i){return[X(i),Y(v)]})};
+  line(g,P(CF.ac),css("--muted"),1,0.45);line(g,P(gs),css("--alt"),1.5);
+  line(g,P(CF.tr),css("--ink"),1.5);line(g,P(fs),css("--accent"),2.5);
+}
+
+/* ---------- ROS flow ---------- */
+var ROS=[
+ {n:"camera_driver",t:0,d:"<b>Node, Jetson CPU.</b> Reads frames from the CSI or USB camera and publishes them. Nothing downstream needs to know which camera you bought."},
+ {n:"/image_raw",t:1,d:"<b>Topic, sensor_msgs/Image.</b> A stream of frames at camera rate. Any number of nodes can subscribe: the detector, a recorder, a debug viewer on your laptop."},
+ {n:"detector",t:0,d:"<b>Node, Jetson GPU.</b> Runs a TensorRT engine on each frame. This is the edge AI step and usually the slowest link in the chain."},
+ {n:"/detections",t:1,d:"<b>Topic, vision_msgs/Detection2DArray.</b> Boxes, classes and scores. Small messages, cheap to send anywhere."},
+ {n:"planner",t:0,d:"<b>Node, Jetson CPU.</b> Combines detections with the robot's position and decides where to move. On a rover this is Nav2; on a drone, your offboard logic."},
+ {n:"/cmd_vel",t:1,d:"<b>Topic, geometry_msgs/Twist.</b> Desired forward speed and turn rate. The handoff from thinking to acting."},
+ {n:"base_controller",t:0,d:"<b>Node on or bridged to the microcontroller.</b> Turns the velocity command into wheel or motor setpoints and runs the fast PID loops from module 2."}
+];
+function buildRos(){
+  var f=$("rosFlow"),d=$("rosDetail");
+  ROS.forEach(function(r,i){
+    var b=document.createElement("button");b.type="button";b.textContent=r.n;if(r.t)b.className="topic";
+    b.setAttribute("aria-pressed",i===0?"true":"false");
+    b.addEventListener("click",function(){f.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");d.innerHTML=r.d});
+    f.appendChild(b);
+    if(i<ROS.length-1){var a=document.createElement("span");a.textContent="→";a.setAttribute("aria-hidden","true");f.appendChild(a)}
+  });
+  d.innerHTML=ROS[0].d;
+}
+
+/* ---------- Jetson memory ---------- */
+function drawMem(){
+  var parts=[["mOs","Linux","--muted"],["mRos","ROS 2","--alt"],["mMod","Models","--accent"],["mBuf","Buffers","--ink"]],tot=0,bar="",leg="";
+  parts.forEach(function(p){var v=val(p[0]);tot+=v;out(p[0],v.toFixed(1)+" GB");
+    bar+='<div style="width:'+(v/8*100)+'%;background:var('+p[2]+')"></div>';
+    leg+='<span><i style="background:var('+p[2]+');height:8px"></i>'+p[1]+"</span>"});
+  $("memBar").innerHTML=bar;$("memLeg").innerHTML=leg;
+  var free=8-tot,msg=free<0?'<span class="warn">Over budget. The kernel will start killing processes.</span>':free<1?'<span class="warn">Under 1 GB free. Expect swapping and stutter.</span>':'<span class="ok">Fits with headroom.</span>';
+  $("memR").innerHTML="<span><b>used</b> "+tot.toFixed(1)+" of 8.0 GB</span><span><b>free</b> "+free.toFixed(1)+" GB</span>"+msg;
+}
+/* ---------- latency ---------- */
+function drawLat(){
+  var ids=["tCap","tPre","tInf","tPost"],tot=0;
+  ids.forEach(function(i){var v=val(i);tot+=v;out(i,v+" ms")});
+  var sp=val("tSpd");out("tSpd",sp.toFixed(1)+" m/s");
+  var dist=sp*tot/1000;
+  $("latR").innerHTML="<span><b>total delay</b> "+tot+" ms</span><span><b>max rate</b> "+(1000/tot).toFixed(1)+" fps</span><span><b>distance travelled blind</b> "+(dist<1?(dist*100).toFixed(0)+" cm":dist.toFixed(2)+" m")+"</span><span><b>inference share</b> "+(val("tInf")/tot*100).toFixed(0)+"%</span>";
+}
+/* ---------- encoder ---------- */
+function drawEnc(){
+  var t=val("eT"),gr=val("eG"),d=val("eD"),e=val("eE");
+  if(!(t>0&&gr>0&&d>0)){$("encR").innerHTML='<span class="warn">Enter values above zero.</span>';return}
+  var tpr=t*gr,mm=Math.PI*d/tpr;
+  $("encR").innerHTML="<span><b>ticks per wheel turn</b> "+tpr.toFixed(0)+"</span><span><b>distance per tick</b> "+mm.toFixed(3)+" mm</span><span><b>error after 10 m</b> "+((e||0)*100).toFixed(0)+" mm</span>";
+}
+/* ---------- flight ---------- */
+function drawFly(){
+  var m=val("fM"),th=val("fT"),s=val("fC"),mah=val("fB"),ef=val("fE"),j=val("fJ");
+  out("fM",m+" g");out("fT",th+" g");out("fC",s+"S");out("fB",mah+" mAh");out("fE",ef.toFixed(1)+" g/W");out("fJ",j+" W");
+  var twr=4*th/m,hov=m/ef,wh=mah/1000*s*3.7*0.8,tmin=wh/(hov+j)*60,tno=wh/hov*60;
+  var tw=twr>=2?'<span class="ok">Thrust margin OK</span>':'<span class="warn">Thrust margin too low, aim for 2.0 or more</span>';
+  $("flyR").innerHTML="<span><b>thrust to weight</b> "+twr.toFixed(2)+"</span><span><b>hover power</b> "+hov.toFixed(0)+" W</span><span><b>hover time</b> "+tmin.toFixed(1)+" min</span><span><b>electronics cost</b> "+(tno-tmin).toFixed(1)+" min</span>"+tw;
+}
+
+function drawAll(){drawPwm();drawPid();drawDd();drawCf();drawMem();drawLat();drawEnc();drawFly()}
+
+/* ---------- wire up ---------- */
+document.querySelectorAll(".quiz").forEach(buildQuiz);
+document.querySelectorAll(".todo").forEach(buildTodo);
+buildRos();
+document.querySelectorAll("input[type=range],input[type=number],input#load").forEach(function(el){
+  if(el.closest(".todo"))return;
+  el.addEventListener("input",drawAll);el.addEventListener("change",drawAll);
+});
+window.addEventListener("hashchange",route);
+window.addEventListener("resize",drawAll);
+try{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawAll)}catch(e){}
+try{new MutationObserver(drawAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}
+paintProgress();route();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawAll);
+})();
+</script>
+</body>
+</html>

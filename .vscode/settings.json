@@ -1,0 +1,14 @@
+{
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+  "python.analysis.extraPaths": [
+    "lessons/01_fundamentals",
+    "lessons/02_control",
+    "lessons/03_motion",
+    "lessons/04_ros2",
+    "lessons/05_jetson",
+    "lessons/06a_rolling",
+    "lessons/06b_flying"
+  ]
+}

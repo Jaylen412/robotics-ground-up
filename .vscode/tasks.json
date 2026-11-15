@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Serve course site",
+      "type": "shell",
+      "command": "python3 -m http.server 8000",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run all lesson tests",
+      "type": "shell",
+      "command": "pytest",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Check reference solutions",
+      "type": "shell",
+      "command": "pytest",
+      "options": { "env": { "LESSON_SRC": "solutions" } },
+      "problemMatcher": []
+    }
+  ]
+}
